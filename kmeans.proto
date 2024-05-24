@@ -1,0 +1,106 @@
+syntax = "proto3";
+
+//python -m grpc_tools.protoc -I . --python_out=. --grpc_python_out=. kmeans.proto
+
+// Service definition for communication between master and mapper
+service KMeansService {
+    // RPC method for sending necessary parameters from master to mapper
+    rpc SendParameters (ParametersRequest) returns (StatusResponse);
+
+    // RPC method for receiving status updates from mapper to master
+    rpc StatusUpdate (StatusUpdateRequest) returns (StatusResponse);
+
+        // RPC method for invoking reducers from master
+    rpc InvokeReducers (ReducerRequest) returns (PartitionFileResponse);
+
+        // RPC method for getting partition file values from mapper to reducer
+    rpc GetPartitionFileValues (MapperRequest) returns (PartitionFileResponse);
+
+
+}
+
+// Message for sending parameters from master to mapper
+message ParametersRequest {
+    // Start line number of the input file
+    int32 start_line_number = 1;
+
+    // End line number of the input file
+    int32 end_line_number = 2;
+
+    // List of centroids with centroid ID, x, and y coordinates
+    repeated CentroidInfo centroids = 3;
+
+    // Number of reducers
+    int32 num_reducers = 4;
+}
+
+// Message for defining a centroid
+message CentroidInfo {
+    // Centroid ID
+    int32 centroid_id = 1;
+
+    // X coordinate of the centroid
+    double x = 2;
+
+    // Y coordinate of the centroid
+    double y = 3;
+}
+
+// Message for receiving status updates from mapper to master
+message StatusUpdateRequest {
+    // Status update message
+    string status_message = 1;
+}
+
+// Message for status response
+message StatusResponse {
+    // Status code indicating success or failure
+    enum StatusCode {
+        SUCCESS = 0;
+        FAILURE = 1;
+    }
+
+    // Status code
+    StatusCode status_code = 1;
+
+    // Detailed status message
+    string status_message = 2;
+}
+
+
+//Message for invoking reducers from master
+message ReducerRequest {
+    // Number of reducers to be invoked
+    int32 num_reducers = 1;
+    int32 reducer_id = 2;
+    repeated int32 mapper_ports = 3;
+
+    // Add any other necessary parameters for reducers here
+    // For example, you can add the list of partition files that each reducer needs to process
+}
+
+// Message for sending request from reducer to mapper
+message MapperRequest {
+    // Reducer ID
+    int32 reducer_id = 1;
+}
+
+
+// Message for sending partition file values from mapper to reducer
+message PartitionFileResponse {
+    // List of partition file values
+    repeated PartitionValue partition_values = 1;
+}
+
+
+// Message for a single partition value
+message PartitionValue {
+    // Centroid ID
+    int32 centroid_id = 1;
+    
+    // Intermediate X value
+    double x = 2;
+    
+    // Intermediate Y value
+    double y = 3;
+}
